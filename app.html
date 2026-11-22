@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>بصمة | BASMA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--o:#657A46;--f:#294C36;--l:#A9C77B;--b:#F4F0E5;--e:#96734B}
+*{box-sizing:border-box;margin:0}
+body{font-family:Cairo,Inter,sans-serif;background:var(--b);color:#1f2e24;line-height:1.7}
+html[lang=en] body{font-family:Inter,Cairo,sans-serif}
+header{background:var(--f);color:var(--b);position:sticky;top:0;z-index:5}
+.bar{max-width:1000px;margin:auto;padding:8px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.3rem;margin-inline-end:auto}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;font-weight:600;background:var(--l);color:var(--f)}
+nav button{background:transparent;color:var(--b)}nav button.on{background:var(--l);color:var(--f)}
+main{max-width:1000px;margin:auto;padding:24px 16px 60px}
+h2{color:var(--f);margin:0 0 10px}.mt{margin-top:26px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.c{background:#fff;border-radius:16px;padding:18px;border-top:6px solid var(--l)}
+.c.lock{filter:grayscale(1);opacity:.5}
+.big{font-size:2rem;font-weight:800;color:var(--f)}
+.warn{background:#f6e3c4;color:#6b4a14;border-radius:10px;padding:8px 12px;margin-bottom:16px;font-size:.9rem}
+.opt{display:block;width:100%;text-align:start;background:#fff;color:var(--f);border:2px solid var(--o);margin:6px 0}
+.pill{display:inline-block;width:auto;margin:4px}
+.ok{background:#dcebc6}.no{background:#f6d9cf}
+.sci{font-style:italic;color:var(--e);font-family:Inter,sans-serif}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px}
+th,td{padding:8px 10px;text-align:start;border-bottom:1px solid #e6e0cf}
+.slot{opacity:.2;cursor:pointer;stroke-dasharray:5 3}.slot.done{opacity:1;stroke-dasharray:none;cursor:default}
+.pl{cursor:pointer}.pl circle{fill:var(--e)}.pl.on circle{fill:var(--f)}
+:focus-visible{outline:3px solid var(--e);outline-offset:2px}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <span class="logo">🌿 <span id="bn"></span></span>
+  <nav id="nav"></nav>
+  <span id="who"></span>
+  <button data-lang="1" type="button" id="lb">EN</button>
+  <button data-out="1" type="button" id="ob"></button>
+</div></header>
+<main id="v"></main>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const U=window.BASMA||{};
+const sb=(U.url&&U.key)?supabase.createClient(U.url,U.key):null;
+const $=s=>document.querySelector(s);
+let lang=localStorage.getItem("basma_lang")||"ar",user=null,role="guest",uname="",prog={},view="home",G=null,LB=null,ST={},PL_SEL=null;
+const t=(a,e)=>lang==="ar"?a:e;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- المحتوى ---------- */
+const SP=[
+{t:"plant",ar:"السوسن الفقوعي",en:"Gilboa iris",sci:"Iris haynei",d:["زهرة سوسن برية مرتبطة باسم منطقة فقوعة (جلبوع).","A wild iris associated with the Fuqu’a (Gilboa) area."],pl:"fq"},
+{t:"plant",ar:"شجرة الزيتون",en:"Olive tree",sci:"Olea europaea",d:["شجرة معمّرة معروفة في فلسطين وتُزرع لثمارها وزيتها.","A long-lived tree widely grown in Palestine for its fruit and oil."]},
+{t:"plant",ar:"الرقوق (السيكلامن)",en:"Persian cyclamen",sci:"Cyclamen persicum",d:["نبات بري مزهر يُعرف بأزهاره ذات البتلات المنعكسة.","A wild flowering plant known for its swept-back petals."]},
+{t:"bird",ar:"طائر الشمس الفلسطيني",en:"Palestine sunbird",sci:"Cinnyris osea",d:["طائر صغير يتغذى على رحيق الأزهار ويمكنه المساعدة في التلقيح.","A small bird that feeds on flower nectar and can help with pollination."]},
+{t:"insect",ar:"نحلة العسل",en:"Western honey bee",sci:"Apis mellifera",d:["حشرة اجتماعية تلقّح الأزهار وتنتج العسل.","A social insect that pollinates flowers and makes honey."]}];
+const PL=[{id:"jn",ar:"جنين",en:"Jenin",x:150,y:70},{id:"fq",ar:"فقوعة",en:"Fuqu’a",x:192,y:92},{id:"nb",ar:"نابلس",en:"Nablus",x:138,y:135},{id:"rm",ar:"رام الله",en:"Ramallah",x:132,y:190},{id:"jr",ar:"أريحا",en:"Jericho",x:196,y:215},{id:"bl",ar:"بيت لحم",en:"Bethlehem",x:124,y:250},{id:"hb",ar:"الخليل",en:"Hebron",x:112,y:300}];
+const STORY=[
+["العصفور الصغير ذو السر الذهبي","The Little Bird with a Golden Secret"],
+[["في حديقة فلسطينية جميلة مليئة بالأزهار الملونة، عاش عصفور صغير اسمه نور. لم يكن عصفورًا عاديًا؛ ريشه لامع يتلألأ تحت الشمس، وطعامه المفضل رحيق الأزهار.","In a beautiful Palestinian garden filled with colorful flowers lived a tiny bird named Noor. He was not an ordinary bird: his feathers sparkled in the sunlight, and his favorite food was flower nectar."],
+["في أحد الأيام لاحظته فتاة صغيرة اسمها لينا. قالت: «واو! يا له من عصفور جميل! ماذا تبحث داخل هذه الأزهار؟» حط نور على غصن قريب وأجاب: «أبحث عن الرحيق! فهو يمنحني الطاقة لأتمكن من الطيران».","One day a girl named Lina noticed him. “Wow! What a beautiful bird! What are you looking for inside those flowers?” Noor landed on a nearby branch. “I’m looking for nectar! It gives me energy to fly.”"],
+["سألته لينا: «لماذا تزور الكثير من الأزهار كل يوم؟» قال نور: «لأن لدي مهمة مهمة أخرى. عندما أزور الأزهار أستطيع المساعدة في نقل حبوب اللقاح من زهرة إلى أخرى، وهذا يساعد بعض النباتات على إنتاج البذور ونمو أزهار جديدة».","“Why do you visit so many flowers?” asked Lina. “I have another important job,” said Noor. “When I visit flowers, I can help move pollen from one flower to another. This helps some plants produce seeds and grow new flowers.”"],
+["اتسعت عينا لينا: «إذًا أنت لا تتناول فطورك فقط، بل تساعد الطبيعة أيضًا!» زقزق نور بفخر: «بالضبط!»","Lina’s eyes widened. “So you are not just having breakfast. You are helping nature!” “Exactly!” Noor chirped proudly."],
+["وفجأة لاحظ نور شيئًا غريبًا: بدأت الحديقة تصبح أكثر هدوءًا، وقلّ عدد الأزهار، وغطى الغبار والنفايات بعض النباتات. نظرت لينا حولها بحزن: «لقد بدأ الناس ينسون الاهتمام بهذه الحديقة. علينا أن نساعد!»","Suddenly Noor noticed something strange: the garden was getting quieter, there were fewer flowers, and some plants were covered in dust and rubbish. Lina looked around sadly. “People have been forgetting to care for this garden. We need to help!”"],
+["في اليوم التالي بدأت لينا مع زملائها مشروعًا صغيرًا: زرعوا أزهارًا محلية مناسبة، ونظفوا المكان، ووضعوا لافتات صغيرة تذكّر الجميع بأهمية حماية الطبيعة.","The next day Lina and her classmates started a garden project: they planted suitable native flowers, cleaned the garden, and placed small signs reminding everyone to protect nature."],
+["وبعد عدة أسابيع عادت الحديقة مليئة بالألوان. عاد نور يطير بسعادة بين الأزهار: «انظري يا لينا! عادت حديقتك مليئة بالحياة!» ضحكت لينا: «وأنت ما زلت تقوم بمهمتك المهمة!»","A few weeks later the garden was colorful again. Noor returned, flying happily between the flowers. “Look, Lina! Your garden is full of life again!” Lina laughed. “And you are still doing your important job!”"],
+["فتح نور جناحيه وقال: «تذكري دائمًا، حتى أصغر الكائنات يمكنها أن تصنع فرقًا كبيرًا». ومنذ ذلك اليوم لم تعد لينا تنظر إلى العصافير الصغيرة كطيور عادية، بل كمساعدين صغار يحمون عالم الطبيعة. — النهاية","Noor spread his wings. “Remember, even the smallest creatures can make a big difference.” From that day on, Lina never saw a tiny bird as just another bird, but as a little helper protecting nature. — THE END"]],
+[["تتجاهل المكان","Ignore the place","الحديقة تزداد سوءًا، والطيور والنباتات تحتاج بيئة سليمة. جرّب خيارًا آخر!","The garden gets worse, and birds and plants need a healthy habitat. Try another choice!"],
+["تبحث عن حديقة أخرى","Look for another garden","الحديقة الأولى تبقى مهملة. حماية البيئة تبدأ من المكان الذي نعيش فيه. جرّب خيارًا آخر!","The first garden stays neglected. Protecting nature starts where we live. Try another choice!"],
+["تبدأ مشروعًا لتنظيف الحديقة مع زملائها","Start a garden cleanup project with classmates","",""]],
+[["طائر الشمس الفلسطيني طائر صغير يعيش في فلسطين.","The Palestine Sunbird is a small bird found in Palestine."],["اسمه العلمي Cinnyris osea.","Its scientific name is Cinnyris osea."],["يتغذى على رحيق الأزهار.","It feeds on nectar from flowers."],["يمكنه المساعدة في التلقيح أثناء زيارته للأزهار.","While visiting flowers, it can help with pollination."],["تعتمد الطيور والنباتات على بيئة طبيعية سليمة.","Birds and plants depend on healthy natural habitats."]],
+[[["ماذا يتغذى عليه طائر الشمس الفلسطيني؟","What does the Palestine Sunbird feed on?"],[["رحيق الأزهار","Flower nectar"],["الأسماك","Fish"],["الحجارة","Stones"]]],
+[["ما اسمه العلمي؟","What is its scientific name?"],[["Cinnyris osea","Cinnyris osea"],["Apis mellifera","Apis mellifera"],["Olea europaea","Olea europaea"]]],
+[["بماذا يمكنه أن يساعد أثناء زيارة الأزهار؟","What can it help with while visiting flowers?"],[["التلقيح","Pollination"],["بناء الطرق","Building roads"],["صنع الأمطار","Making rain"]]]]];
+const PARTS={
+plant:{vb:"0 0 200 240",base:"",parts:[
+{id:"root",ar:"جذر",en:"Root",svg:'<path d="M100 202 Q70 220 50 238 M100 202 L104 238 M100 202 Q130 220 150 238" stroke="#96734B" stroke-width="9" fill="none" stroke-linecap="round"/>'},
+{id:"stem",ar:"ساق",en:"Stem",svg:'<rect x="96" y="90" width="10" height="112" rx="4" fill="#657A46"/>'},
+{id:"leaf",ar:"ورقة",en:"Leaf",svg:'<path d="M104 160 Q160 140 166 90 Q110 100 104 160z" fill="#A9C77B"/>'},
+{id:"flower",ar:"زهرة",en:"Flower",svg:'<circle cx="101" cy="68" r="28" fill="#d9779b"/><circle cx="101" cy="68" r="10" fill="#f3c84b"/>'}]},
+bird:{vb:"0 0 250 200",base:'<ellipse cx="115" cy="100" rx="52" ry="34" fill="#2f6f5e"/><circle cx="168" cy="80" r="21" fill="#2f6f5e"/><circle cx="175" cy="76" r="3" fill="#fff"/>',parts:[
+{id:"beak",ar:"منقار",en:"Beak",svg:'<path d="M187 76 Q222 84 232 100 Q200 96 187 88z" fill="#294C36"/>'},
+{id:"wing",ar:"جناح",en:"Wing",svg:'<ellipse cx="110" cy="98" rx="34" ry="16" transform="rotate(-18 110 98)" fill="#A9C77B"/>'},
+{id:"tail",ar:"ذيل",en:"Tail",svg:'<path d="M66 106 L12 124 L22 96 L62 92z" fill="#657A46"/>'},
+{id:"legs",ar:"أرجل",en:"Legs",svg:'<path d="M105 132 L100 176 M128 132 L132 176" stroke="#96734B" stroke-width="9" fill="none" stroke-linecap="round"/>'}]}};
+const has=k=>!!prog[k];
+const BD=[["🌱","أول خطوة","First step",()=>Object.keys(prog).length>0],["🌿","مُركّب النبتة","Plant builder",()=>has("game:plant")],["🐦","مُركّب العصفور","Bird builder",()=>has("game:bird")],["📖","قارئ القصص","Story reader",()=>has("story:sunbird")],["⭐","نجم الاختبار","Quiz star",()=>(prog["quiz:sunbird"]||{}).score>=30],["🗺️","مستكشف الخريطة","Map explorer",()=>has("map:visited")]];
+const pts=()=>Object.values(prog).reduce((a,x)=>a+(x.score||0),0);
+const lvl=()=>Math.floor(pts()/50)+1;
+
+/* ---------- حفظ التقدم: قاعدة البيانات للمسجّل، والمتصفح للزائر ---------- */
+async function loadProg(){
+  if(sb&&user){const {data}=await sb.from("student_progress").select("*").eq("student_id",user.id);(data||[]).forEach(r=>prog[r.item_type+":"+r.item_id]=r)}
+  else prog=JSON.parse(localStorage.getItem("basma_prog")||"{}");
+}
+async function save(type,id,score){
+  const k=type+":"+id;score=Math.max(score,(prog[k]||{}).score||0);prog[k]={score,completed:true};
+  if(sb&&user&&role==="student")await sb.from("student_progress").upsert({student_id:user.id,item_type:type,item_id:id,score,completed:true,updated_at:new Date().toISOString()});
+  else if(role==="guest")localStorage.setItem("basma_prog",JSON.stringify(prog));
+}
+
+/* ---------- الواجهات ---------- */
+const warn=()=>role==="guest"?`<div class="warn">${t("أنت في وضع الزائر: يُحفظ تقدمك على هذا المتصفح فقط.","Guest mode: your progress is saved on this browser only.")} <a href="index.html">${t("سجّل الدخول","Log in")}</a></div>`:"";
+const go=(v,tx)=>`<button data-go="${v}" type="button">${tx}</button>`;
+const V={
+home(){const n=BD.filter(b=>b[3]()).length;
+ return `${warn()}<h2>${t("مرحبًا بك في بصمة! 🌿","Welcome to BASMA! 🌿")}</h2><p>${t("هل أنت مستعد لاكتشاف شيء جديد عن الطبيعة اليوم؟","Ready to discover something new about nature today?")}</p>
+ <div class="g mt"><div class="c"><div class="big">${pts()}</div>${t("نقطة","points")}</div><div class="c"><div class="big">${lvl()}</div>${t("المستوى","level")}</div><div class="c"><div class="big">${n}/${BD.length}</div>${t("شارات","badges")}</div></div>
+ <h2 class="mt">${t("استكشف","Explore")}</h2><div class="g">
+ <div class="c"><h3>${t("مكتبة الكائنات","Nature Library")}</h3><p>${t("تعرّف على نباتات وطيور وحشرات فلسطين.","Meet Palestinian plants, birds and insects.")}</p>${go("library",t("افتح","Open"))}</div>
+ <div class="c"><h3>${t("القصص","Stories")}</h3><p>${t("اقرأ قصة نور واختر نهايتها.","Read Noor’s story and make your choice.")}</p>${go("stories",t("اقرأ","Read"))}</div>
+ <div class="c"><h3>${t("الألعاب","Games")}</h3><p>${t("ركّب النبتة والعصفور واجمع النقاط.","Build the plant and the bird, earn points.")}</p>${go("games",t("العب","Play"))}</div>
+ <div class="c"><h3>${t("خريطة فلسطين","Palestine Map")}</h3><p>${t("استكشف الأماكن والكائنات.","Explore places and species.")}</p>${go("map",t("افتح","Open"))}</div></div>`},
+library(){
+ if(LB!==null){const s=SP[LB],p=PL.find(x=>x.id===s.pl);
+  return `<button data-go="library" type="button">← ${t("رجوع","Back")}</button><div class="c mt"><h2>${s[lang]}</h2><div>${lang==="ar"?s.en:s.ar}</div><div class="sci">${s.sci}</div><p>${s.d[lang==="ar"?0:1]}</p>
+  <p><b>${t("أين يوجد؟","Where is it found?")}</b> ${p?p[lang]+" ("+t("بحاجة إلى مراجعة علمية","needs scientific review")+")":t("لم يُوثّق بعد","Not documented yet")}</p>
+  <div class="warn">${t("بحاجة إلى مراجعة علمية — المصادر لم تُضف بعد.","Needs scientific review — sources not added yet.")}</div>
+  ${s.t==="plant"?`<button data-g="plant" type="button">${t("ركّب النبتة","Build the plant")}</button>`:""}${s.t==="bird"?`<button data-g="bird" type="button">${t("ركّب العصفور","Build the bird")}</button> <button data-go="stories" type="button">${t("اقرأ قصته","Read its story")}</button>`:""}</div>`}
+ return `<h2>${t("مكتبة الكائنات","Nature Library")}</h2><div class="g">${SP.map((s,i)=>`<div class="c"><h3>${s[lang]}</h3><div class="sci">${s.sci}</div><p>${s.d[lang==="ar"?0:1]}</p><button data-sp="${i}" type="button">${t("التفاصيل","Details")}</button></div>`).join("")}</div>`},
+stories(){
+ if(!ST.open)return `<h2>${t("القصص","Stories")}</h2><div class="c"><h3>${STORY[0][lang==="ar"?0:1]}</h3><p>${t("قصة عن عصفور صغير ومهمته المهمة.","A story about a tiny bird and its important job.")}</p>${prog["story:sunbird"]?`<p>✅ ${t("أكملتها","Completed")}</p>`:""}<button data-st="open" type="button">${t("ابدأ القصة","Start the story")}</button></div>`;
+ const i=lang==="ar"?0:1;
+ if(ST.ph==="read")return `<h2>${STORY[0][i]}</h2><div class="c"><p>${STORY[1][ST.i][i]}</p></div><p class="mt"><button data-st="next" type="button">${ST.i===STORY[1].length-1?t("ماذا تعلمنا؟","What did we learn?"):t("التالي","Next")}</button></p>`;
+ if(ST.ph==="choice")return `<h2>${t("ماذا ستفعل لينا؟","What will Lina do?")}</h2>${STORY[2].map((o,j)=>`<button class="opt" data-st="c${j}" type="button">${o[i]}</button>`).join("")}${ST.fb?`<div class="c no mt">${ST.fb}</div>`:""}`;
+ if(ST.ph==="learn")return `<h2>${t("ماذا تعلمنا؟","What did we learn?")}</h2><div class="c"><ul style="padding-inline-start:20px">${STORY[3].map(x=>`<li>${x[i]}</li>`).join("")}</ul></div><p class="mt"><button data-st="quiz" type="button">${t("ابدأ الاختبار","Start the quiz")}</button></p>`;
+ if(ST.ph==="quiz"){const q=STORY[4][ST.q];
+  return `<h2>${t("سؤال","Question")} ${ST.q+1}/3</h2><p><b>${q[0][i]}</b></p>${q[1].map((o,j)=>`<button class="opt ${ST.a!=null?(j===0?"ok":(j===ST.a?"no":"")):""}" data-st="q${j}" type="button">${o[i]}</button>`).join("")}${ST.a!=null?`<p class="mt"><button data-st="nq" type="button">${ST.q===2?t("النتيجة","Result"):t("التالي","Next")}</button></p>`:""}`}
+ return `<div class="c ok"><h2>${t("أحسنت!","Well done!")} 🎉</h2><p>${t("نتيجتك في الاختبار","Your quiz score")}: ${ST.sc}/30</p>${go("badges",t("شاهد إنجازاتي","See my achievements"))}</div>`},
+games(){
+ if(G)return gameV();
+ return `<h2>${t("الألعاب","Games")}</h2><div class="g"><div class="c"><h3>${t("ركّب النبتة","Build the plant")}</h3>${prog["game:plant"]?`<p>⭐ ${prog["game:plant"].score}</p>`:""}<button data-g="plant" type="button">${t("العب","Play")}</button></div><div class="c"><h3>${t("ركّب العصفور","Build the bird")}</h3>${prog["game:bird"]?`<p>⭐ ${prog["game:bird"].score}</p>`:""}<button data-g="bird" type="button">${t("العب","Play")}</button></div></div>`},
+map(){const p=PL.find(x=>x.id===PL_SEL);
+ return `<h2>${t("خريطة فلسطين البيئية","Palestine Nature Map")}</h2><div class="warn">${t("خريطة تخطيطية تعليمية، ليست خريطة سياسية ولا بمقياس رسم. لا تُعرض مواقع انتشار إلا عند توثيقها.","A schematic educational map — not political and not to scale. Species locations are shown only when documented.")}</div>
+ <div class="g"><div class="c"><svg viewBox="0 0 300 360" width="100%"><path d="M110 20Q200 30 215 120Q230 220 190 320Q150 350 100 330Q70 200 90 100Q85 40 110 20z" fill="#A9C77B" opacity=".55"/>${PL.map(x=>`<g class="pl${x.id===PL_SEL?" on":""}" data-pl="${x.id}" tabindex="0"><circle cx="${x.x}" cy="${x.y}" r="9"/><text x="${x.x+13}" y="${x.y+4}" font-size="13" fill="#294C36">${x[lang]}</text></g>`).join("")}</svg></div>
+ <div class="c">${p?`<h3>${p[lang]}</h3>${SP.filter(s=>s.pl===p.id).map(s=>`<p><b>${s[lang]}</b> <span class="sci">${s.sci}</span><br><small>${t("بحاجة إلى مراجعة علمية","Needs scientific review")}</small></p>`).join("")||`<p>${t("لم تُوثّق أنواع هذا المكان بعد.","No species documented for this place yet.")}</p>`}`:`<p>${t("اضغط على مكان في الخريطة.","Tap a place on the map.")}</p>`}</div></div>`},
+badges(){return `<h2>${t("إنجازاتي","My achievements")}</h2><div class="g"><div class="c"><div class="big">${pts()}</div>${t("نقطة","points")}</div><div class="c"><div class="big">${lvl()}</div>${t("المستوى","level")}</div></div><div class="g mt">${BD.map(b=>`<div class="c ${b[3]()?"":"lock"}"><div class="big">${b[0]}</div>${b[lang==="ar"?1:2]}</div>`).join("")}</div>`},
+async teacher(){
+ if(!sb)return "";
+ const [a,b]=await Promise.all([sb.from("profiles").select("id,full_name").eq("role","student"),sb.from("student_progress").select("student_id,score,completed")]);
+ const rows=(a.data||[]).map(s=>{const m=(b.data||[]).filter(x=>x.student_id===s.id);return{n:s.full_name||"—",c:m.filter(x=>x.completed).length,p:m.reduce((z,x)=>z+(x.score||0),0)}}).sort((x,y)=>y.p-x.p);
+ return `<h2>${t("متابعة الطلبة","Student performance")}</h2>${rows.length?`<div class="g"><div class="c ok">🏆 ${t("الأكثر تقدمًا","Most advanced")}: <b>${esc(rows[0].n)}</b></div>${rows.length>1?`<div class="c no">🤝 ${t("يحتاج دعمًا","Needs support")}: <b>${esc(rows[rows.length-1].n)}</b></div>`:""}</div>
+ <div class="scroll mt"><table><tr><th>${t("الطالب","Student")}</th><th>${t("الأنشطة المكتملة","Completed")}</th><th>${t("النقاط","Points")}</th></tr>${rows.map(r=>`<tr><td>${esc(r.n)}</td><td>${r.c}</td><td>${r.p}</td></tr>`).join("")}</table></div>`:`<p>${t("لا يوجد طلبة مسندون إليك بعد.","No students assigned to you yet.")}</p>`}
+ <h2 class="mt">${t("خطة حصة مقترحة","Suggested lesson plan")}</h2><div class="c"><ol style="padding-inline-start:20px"><li>${t("قراءة قصة «العصفور الصغير ذو السر الذهبي»","Read “The Little Bird with a Golden Secret”")}</li><li>${t("لعبة تركيب العصفور والنبتة","Play the bird and plant building games")}</li><li>${t("نقاش: كيف نحمي حديقتنا؟","Discussion: how do we protect our garden?")}</li></ol></div>
+ <div class="warn mt">${t("إسناد الأنشطة وإضافة ألعاب جديدة من لوحة المعلم: الخطوة التالية (غير متاحة بعد).","Assigning activities and adding new games from the teacher panel: next step (not available yet).")}</div>`},
+async admin(){
+ if(role!=="super_admin")return `<div class="warn">${t("لوحتك قيد البناء في الخطوة التالية.","Your dashboard is being built in the next step.")}</div>`;
+ const {data}=await sb.from("school_leads").select("*").order("created_at",{ascending:false});
+ return `<h2>${t("طلبات المدارس","School requests")}</h2>${(data||[]).length?`<div class="scroll"><table><tr><th>${t("المدرسة","School")}</th><th>${t("المحافظة","Governorate")}</th><th>${t("المسؤول","Contact")}</th><th>${t("الهاتف","Phone")}</th><th>${t("البريد","Email")}</th><th>${t("الحالة","Status")}</th></tr>${data.map(r=>`<tr><td>${esc(r.school_name)}</td><td>${esc(r.governorate)}</td><td>${esc(r.contact_name)}</td><td>${esc(r.phone)}</td><td>${esc(r.email)}</td><td>${esc(r.status)}</td></tr>`).join("")}</table></div>`:`<p>${t("لا توجد طلبات بعد.","No requests yet.")}</p>`}`}
+};
+function gameV(){const P=PARTS[G.k],left=P.parts.filter(p=>!G.done.has(p.id));
+ return `<h2>${G.k==="plant"?t("ركّب النبتة","Build the plant"):t("ركّب العصفور","Build the bird")}</h2><p>${t("اختر اسم الجزء ثم اضغط على مكانه في الرسم.","Pick a part name, then tap its place on the drawing.")}</p>
+ <div class="c" style="max-width:420px;margin:12px 0"><svg viewBox="${P.vb}" width="100%">${P.base}${P.parts.map(p=>`<g class="slot${G.done.has(p.id)?" done":""}" data-gs="${p.id}">${p.svg}</g>`).join("")}</svg></div>
+ <div>${left.map(p=>`<button class="pill" style="${G.sel===p.id?"outline:3px solid var(--f)":""}" data-gp="${p.id}" type="button">${p[lang]}</button>`).join("")}</div><p id="fb" role="status">${G.fb||""}</p>
+ ${left.length?"":`<div class="c ok"><b>${t("أحسنت! أكملت التركيب","Well done! You completed it")}</b> — ${t("النقاط","Points")}: ${G.score}<br><button data-go="games" type="button">${t("رجوع","Back")}</button> <button data-g="${G.k}" type="button">${t("إعادة المحاولة","Try again")}</button></div>`}`}
+
+/* ---------- التنقل والأحداث ---------- */
+const LBL={home:["الرئيسية","Home"],library:["المكتبة","Library"],stories:["القصص","Stories"],games:["الألعاب","Games"],map:["الخريطة","Map"],badges:["إنجازاتي","Achievements"],teacher:["لوحة المعلم","Teacher"],admin:["الإدارة","Admin"]};
+const NAV=()=>role==="teacher"?["teacher","library","stories","games"]:(role==="student"||role==="guest")?["home","library","stories","games","map","badges"]:["admin"];
+async function render(){
+  document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  $("#bn").textContent=t("بصمة","BASMA");$("#lb").textContent=lang==="ar"?"EN":"عربي";$("#ob").textContent=role==="guest"?t("خروج","Exit"):t("تسجيل الخروج","Log out");
+  $("#who").textContent=esc(uname)+(role==="student"||role==="guest"?" · "+pts()+" ⭐":"");
+  $("#nav").innerHTML=NAV().map(v=>`<button type="button" data-go="${v}" class="${v===view?"on":""}">${LBL[v][lang==="ar"?0:1]}</button>`).join("");
+  $("#v").innerHTML=await V[view]();
+}
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-go],[data-lang],[data-out],[data-st],[data-gp],[data-gs],[data-g],[data-pl],[data-sp]");if(!el)return;const d=el.dataset;
+  if(d.go){view=d.go;if(view==="games")G=null;if(view==="library")LB=null;if(view==="stories")ST={}}
+  else if(d.lang){lang=lang==="ar"?"en":"ar";localStorage.setItem("basma_lang",lang)}
+  else if(d.out){if(sb&&user)await sb.auth.signOut();sessionStorage.removeItem("basma_guest");location.href="index.html";return}
+  else if(d.sp){LB=+d.sp}
+  else if(d.g){view="games";G={k:d.g,sel:null,done:new Set(),mis:0,fb:"",score:0}}
+  else if(d.gp&&G){G.sel=d.gp;G.fb=""}
+  else if(d.gs&&G){const id=d.gs;if(!G.done.has(id)){
+    if(!G.sel)G.fb=t("اختر اسم الجزء أولًا.","Pick a part name first.");
+    else if(G.sel===id){G.done.add(id);G.sel=null;G.fb="✓ "+t("صحيح!","Correct!");
+      if(G.done.size===PARTS[G.k].parts.length){G.score=Math.max(10,40-5*G.mis);await save("game",G.k,G.score)}}
+    else{G.mis++;G.fb=t("ليس هذا الجزء. حاول مرة أخرى.","Not this one. Try again.")}}}
+  else if(d.pl){PL_SEL=d.pl;await save("map","visited",0)}
+  else if(d.st){const a=d.st;
+    if(a==="open")ST={open:1,ph:"read",i:0,q:0,sc:0};
+    else if(a==="next"){if(ST.i===4&&!ST.passed){ST.ph="choice";ST.fb=""}else if(ST.i===STORY[1].length-1){ST.ph="learn";await save("story","sunbird",20)}else ST.i++}
+    else if(a[0]==="c"&&a.length===2){const j=+a[1];if(j===2){ST.passed=1;ST.ph="read";ST.i=5;ST.fb=""}else ST.fb=STORY[2][j][lang==="ar"?2:3]}
+    else if(a==="quiz"){ST.ph="quiz";ST.q=0;ST.sc=0;ST.a=null}
+    else if(a[0]==="q"&&ST.a==null){ST.a=+a[1];if(ST.a===0)ST.sc+=10}
+    else if(a==="nq"){if(ST.q===2){ST.ph="done";await save("quiz","sunbird",ST.sc)}else{ST.q++;ST.a=null}}}
+  render();
+});
+(async()=>{
+  if(sb){const {data}=await sb.auth.getSession();
+    if(data.session){user=data.session.user;const {data:p}=await sb.from("profiles").select("role,full_name,active").eq("id",user.id).single();
+      if(!p||!p.active){await sb.auth.signOut();location.href="index.html";return}role=p.role;uname=p.full_name||""}}
+  if(!user){if(sessionStorage.getItem("basma_guest")!=="1"){location.href="index.html";return}role="guest";uname=t("زائر","Guest")}
+  await loadProg();view=NAV()[0];render();
+})();
+</script>
+</body>
+</html>
