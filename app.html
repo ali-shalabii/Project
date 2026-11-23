@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>بصمة | BASMA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--o:#657A46;--f:#294C36;--l:#A9C77B;--b:#F4F0E5;--e:#96734B}
+*{box-sizing:border-box;margin:0}
+body{font-family:Cairo,Inter,sans-serif;background:var(--b);color:#1f2e24;line-height:1.7}
+html[lang=en] body{font-family:Inter,Cairo,sans-serif}
+header{background:var(--f);color:var(--b);position:sticky;top:0;z-index:5}
+.bar{max-width:1000px;margin:auto;padding:8px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.3rem;margin-inline-end:auto}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;font-weight:600;background:var(--l);color:var(--f)}
+nav button{background:transparent;color:var(--b)}nav button.on{background:var(--l);color:var(--f)}
+main{max-width:1000px;margin:auto;padding:24px 16px 60px}
+h2{color:var(--f);margin:0 0 10px}h3{color:var(--f)}.mt{margin-top:24px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.c{background:#fff;border-radius:16px;padding:18px;border-top:6px solid var(--l)}
+.c.lock{filter:grayscale(1);opacity:.5}
+.big{font-size:2rem;font-weight:800;color:var(--f)}
+.warn{background:#f6e3c4;color:#6b4a14;border-radius:10px;padding:8px 12px;margin:10px 0;font-size:.9rem}
+.opt{display:block;width:100%;text-align:start;background:#fff;color:var(--f);border:2px solid var(--o);margin:6px 0}
+.pill{display:inline-block;margin:4px}
+.ok{background:#dcebc6}.no{background:#f6d9cf}
+.sci{font-style:italic;color:var(--e);font-family:Inter,sans-serif}
+.tg{color:var(--e);font-weight:600}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px}
+th,td{padding:8px 10px;text-align:start;border-bottom:1px solid #e6e0cf}
+.ph{background:#fff;border-radius:12px;overflow:hidden;display:grid;place-items:center;aspect-ratio:4/3;margin-bottom:10px}
+.ph img{width:100%;height:100%;object-fit:cover}.ph svg{width:100%;height:100%}.em{font-size:4rem}
+.ph.sm{aspect-ratio:3/2}
+.slot{opacity:.2;cursor:pointer;stroke-dasharray:5 3}.slot.done{opacity:1;stroke-dasharray:none;cursor:default}
+.land{stroke-dasharray:1}.pl{cursor:pointer}.pl .dot{fill:var(--e)}.pl.on .dot{fill:var(--f)}
+.pulse{fill:var(--e);opacity:.5;transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:no-preference){
+.land{animation:dr 2.4s ease forwards}@keyframes dr{from{stroke-dashoffset:1;fill-opacity:0}to{stroke-dashoffset:0;fill-opacity:1}}
+.pulse{animation:pu 2.2s infinite}@keyframes pu{from{transform:scale(1);opacity:.6}to{transform:scale(3.4);opacity:0}}
+.toast{animation:tp .5s}@keyframes tp{from{transform:translateY(30px) scale(.8);opacity:0}to{transform:none;opacity:1}}}
+#tc{position:fixed;inset-inline:0;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:20;pointer-events:none}
+.toast{background:var(--f);color:#fff;padding:12px 22px;border-radius:14px;box-shadow:0 6px 18px #0004;max-width:92%}
+:focus-visible{outline:3px solid var(--e);outline-offset:2px}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <span class="logo">🌿 <span id="bn"></span></span>
+  <nav id="nav"></nav><span id="who"></span>
+  <button data-lang="1" type="button" id="lb">EN</button>
+  <button data-out="1" type="button" id="ob"></button>
+</div></header>
+<main id="v"></main><div id="tc" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const U=window.BASMA||{};
+const sb=(U.url&&U.key)?supabase.createClient(U.url,U.key):null;
+const $=s=>document.querySelector(s);
+let lang=localStorage.getItem("basma_lang")||"ar",user=null,role="guest",uname="",prog={},view="home",G=null,LB=null,ST={},PL_SEL=null,fl=null;
+const t=(a,e)=>lang==="ar"?a:e,I=()=>lang==="ar"?0:1;
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuf=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+
+/* ----- المصادر ----- */
+const srcList=s=>{const ids=[];(s.facts||[]).forEach(f=>f[2].split(",").forEach(i=>ids.push(i)));if(PARTS[s.pk])PARTS[s.pk].parts.forEach(p=>p.s.split(",").forEach(i=>ids.push(i)));return [...new Set(ids.filter(Boolean))]};
+const tag=(ids,L)=>(ids||"").split(",").filter(Boolean).map(i=>`<sup class="tg">[${L.indexOf(i)+1}]</sup>`).join("");
+const srcHtml=L=>L.length?`<h3 class="mt">${t("المصادر","Sources")}</h3><ol style="padding-inline-start:22px">${L.map(id=>`<li><a href="${SRC[id][2]}" target="_blank" rel="noopener">${SRC[id][I()]}</a></li>`).join("")}</ol><div class="warn">${t("جُمعت المعلومات من المصادر أعلاه وتحتاج مراجعة خبير بيئي قبل الاعتماد الرسمي.","Information was gathered from the sources above and needs review by an environmental expert before official use.")}</div>`:"";
+function ILL(k){const s=SP.find(x=>x.k===k),P=s&&PARTS[s.pk];return P?`<svg viewBox="${P.vb}" role="img" aria-label="${esc(s.en)}">${P.base}${P.parts.map(p=>p.svg).join("")}</svg>`:`<div class="em">${s?s.em:"🌿"}</div>`}
+const IMG=(s,c)=>`<div class="ph ${c||""}"><img src="${s.img}" alt="${esc(s[lang])}" loading="lazy" onerror="this.parentNode.innerHTML=ILL('${s.k}')"></div>`;
+
+/* ----- الأوسمة والنقاط ----- */
+const has=k=>!!prog[k];
+const BD=[["🌱","أول خطوة","First step",()=>Object.keys(prog).length>0],["🌸","مُركّب السوسنة","Iris builder",()=>has("game:iris")],["🐦","مُركّب العصفور","Bird builder",()=>has("game:bird")],["📖","قارئ قصة السوسنة","Iris story reader",()=>has("story:iris")],["🌻","قارئ قصة نور","Noor’s story reader",()=>has("story:sunbird")],["⭐","نجم السوسنة","Iris quiz star",()=>(prog["quiz:iris"]||{}).score>=30],["✨","نجم العصفور","Bird quiz star",()=>(prog["quiz:sunbird"]||{}).score>=30],["🗺️","مستكشف الخريطة","Map explorer",()=>has("map:visited")],["🏆","حارس الطبيعة","Nature guardian",()=>pts()>=150]];
+const pts=()=>Object.values(prog).reduce((a,x)=>a+(x.score||0),0);
+const lvl=()=>Math.floor(pts()/50)+1;
+function toast(m){const d=document.createElement("div");d.className="toast";d.innerHTML=m;$("#tc").appendChild(d);setTimeout(()=>d.remove(),4200)}
+async function loadProg(){
+  if(sb&&user){const {data}=await sb.from("student_progress").select("*").eq("student_id",user.id);(data||[]).forEach(r=>prog[r.item_type+":"+r.item_id]=r)}
+  else prog=JSON.parse(localStorage.getItem("basma_prog")||"{}");
+}
+async function save(type,id,score){
+  const k=type+":"+id,b0=BD.map(b=>b[3]()),p0=pts(),l0=lvl();
+  score=Math.max(score,(prog[k]||{}).score||0);prog[k]={score,completed:true};
+  if(sb&&user&&role==="student")await sb.from("student_progress").upsert({student_id:user.id,item_type:type,item_id:id,score,completed:true,updated_at:new Date().toISOString()});
+  else if(role==="guest")localStorage.setItem("basma_prog",JSON.stringify(prog));
+  if(pts()>p0)toast(`⭐ +${pts()-p0} ${t("نقطة","points")}`);
+  BD.forEach((b,i)=>{if(!b0[i]&&b[3]())toast(`🏅 ${t("وسام جديد","New badge")}: ${b[0]} ${b[lang==="ar"?1:2]}`)});
+  if(lvl()>l0)toast(`🎉 ${t("وصلت إلى المستوى","You reached level")} ${lvl()}`);
+}
+
+/* ----- الواجهات ----- */
+const warn=()=>role==="guest"?`<div class="warn">${t("أنت في وضع الزائر: يُحفظ تقدمك على هذا المتصفح فقط.","Guest mode: your progress is saved on this browser only.")} <a href="index.html">${t("سجّل الدخول","Log in")}</a></div>`:"";
+const go=(v,x)=>`<button data-go="${v}" type="button">${x}</button>`;
+const V={
+home(){const n=BD.filter(b=>b[3]()).length;
+ return `${warn()}<h2>${t("مرحبًا بك في بصمة! 🌿","Welcome to BASMA! 🌿")}</h2><p>${t("هل أنت مستعد لاكتشاف شيء جديد عن الطبيعة اليوم؟","Ready to discover something new about nature today?")}</p>
+ <div class="g mt"><div class="c"><div class="big">${pts()}</div>${t("نقطة","points")}</div><div class="c"><div class="big">${lvl()}</div>${t("المستوى","level")}</div><div class="c"><div class="big">${n}/${BD.length}</div>${t("أوسمة","badges")}</div></div>
+ <h2 class="mt">${t("استكشف","Explore")}</h2><div class="g">
+ <div class="c"><h3>${t("مكتبة الكائنات","Nature Library")}</h3><p>${t("شروحات مفصلة مع المصادر.","Detailed explanations with sources.")}</p>${go("library",t("افتح","Open"))}</div>
+ <div class="c"><h3>${t("القصص","Stories")}</h3><p>${t("الزهرة التي رفضت أن تختفي وقصة نور.","The Flower That Refused to Disappear and Noor’s story.")}</p>${go("stories",t("اقرأ","Read"))}</div>
+ <div class="c"><h3>${t("الألعاب","Games")}</h3><p>${t("ركّب السوسنة والعصفور.","Build the iris and the sunbird.")}</p>${go("games",t("العب","Play"))}</div>
+ <div class="c"><h3>${t("خريطة فلسطين","Palestine Map")}</h3><p>${t("أين تعيش الكائنات؟","Where do species live?")}</p>${go("map",t("افتح","Open"))}</div></div>`},
+library(){const i=I();
+ if(LB!==null){const s=SP[LB],L=srcList(s),P=PARTS[s.pk];
+  return `<button data-go="library" type="button">← ${t("رجوع","Back")}</button>
+  <div class="g mt" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"><div>${IMG(s)}${s.credit?`<small>${esc(s.credit)}</small>`:""}</div><div><h2>${s[lang]}</h2><div>${lang==="ar"?s.en:s.ar}</div><div class="sci">${s.sci}</div><p>${s.d[i]}</p>
+  ${P?`<button data-g="${s.pk}" type="button">${t("ركّب أجزاءه","Build its parts")}</button> `:""}${STORIES[s.k]?`<button data-st="open:${s.k}" type="button">${t("اقرأ قصته","Read its story")}</button>`:""}${s.pl&&s.pl.length?` <button data-pl="${s.pl[0]}" data-gomap="1" type="button">${t("على الخريطة","On the map")}</button>`:""}</div></div>
+  ${s.facts?`${P?`<h3 class="mt">${t("الأجزاء وشرحها","Parts and explanation")}</h3><div class="g">${P.parts.map(p=>`<div class="c"><b>${p[lang]}</b><p>${p.d[i]}${tag(p.s,L)}</p></div>`).join("")}</div>`:""}
+  <h3 class="mt">${t("حقائق موثّقة","Documented facts")}</h3><div class="c"><ul style="padding-inline-start:20px">${s.facts.map(f=>`<li>${f[i]}${tag(f[2],L)}</li>`).join("")}</ul></div>${srcHtml(L)}`
+  :`<div class="warn">${t("بحاجة إلى مراجعة علمية — لم تُجمع مصادر هذا الكائن بعد.","Needs scientific review — sources for this species have not been collected yet.")}</div>`}`}
+ return `<h2>${t("مكتبة الكائنات","Nature Library")}</h2><div class="g">${SP.map((s,j)=>`<div class="c">${IMG(s,"sm")}<h3>${s[lang]}</h3><div class="sci">${s.sci}</div><p>${s.d[i]}</p>${s.facts?`<small>✔ ${t("موثّق بمصادر","Sourced")}</small><br>`:`<small>⚠ ${t("بحاجة إلى مراجعة علمية","Needs scientific review")}</small><br>`}<button data-sp="${j}" type="button">${t("التفاصيل","Details")}</button></div>`).join("")}</div>`},
+stories(){const i=I();
+ if(!ST.k)return `<h2>${t("القصص","Stories")}</h2><div class="g">${Object.keys(STORIES).map(k=>`<div class="c"><h3>${STORIES[k].title[i]}</h3><p>${STORIES[k].blurb[i]}</p>${prog["story:"+k]?`<p>✅ ${t("أكملتها","Completed")}</p>`:""}<button data-st="open:${k}" type="button">${t("ابدأ القصة","Start the story")}</button></div>`).join("")}</div>`;
+ const S=STORIES[ST.k];
+ if(ST.ph==="read")return `<h2>${S.title[i]}</h2><div class="c"><p>${S.paras[ST.i][i]}</p></div><p class="mt"><button data-st="next" type="button">${ST.i===S.paras.length-1?t("ماذا تعلمنا؟","What did we learn?"):t("التالي","Next")}</button></p>`;
+ if(ST.ph==="choice")return `<h2>${t("ماذا ستفعل؟","What will you do?")}</h2>${S.ch.map((o,j)=>`<button class="opt" data-st="c${j}" type="button">${o[i]}</button>`).join("")}${ST.fb?`<div class="c no mt">${ST.fb}</div>`:""}`;
+ if(ST.ph==="learn")return `<h2>${t("ماذا تعلمنا؟","What did we learn?")}</h2><div class="c"><ul style="padding-inline-start:20px">${S.learn.map(x=>`<li>${x[i]}</li>`).join("")}</ul></div><p class="mt"><button data-st="quiz" type="button">${t("ابدأ الاختبار","Start the quiz")}</button></p>`;
+ if(ST.ph==="quiz"){const q=S.quiz[ST.q];
+  return `<h2>${t("سؤال","Question")} ${ST.q+1}/3</h2><p><b>${q[0][i]}</b></p>${ST.o.map(j=>`<button class="opt ${ST.a!=null?(j===0?"ok":(j===ST.a?"no":"")):""}" data-st="q${j}" type="button">${q[1][j][i]}</button>`).join("")}${ST.a!=null?`<p class="mt"><button data-st="nq" type="button">${ST.q===2?t("النتيجة","Result"):t("التالي","Next")}</button></p>`:""}`}
+ return `<div class="c ok"><h2>${t("أحسنت!","Well done!")} 🎉</h2><p>${t("نتيجتك في الاختبار","Your quiz score")}: ${ST.sc}/30</p>${go("badges",t("شاهد أوسمتي","See my badges"))} ${go("stories",t("قصص أخرى","More stories"))}</div>`},
+games(){const i=I();
+ if(G)return gameV();
+ return `<h2>${t("الألعاب","Games")}</h2><div class="g">${SP.filter(s=>s.pk).map(s=>`<div class="c"><div class="ph sm">${ILL(s.k)}</div><h3>${t("ركّب","Build")}: ${s[lang]}</h3>${prog["game:"+s.pk]?`<p>⭐ ${prog["game:"+s.pk].score}</p>`:""}<button data-g="${s.pk}" type="button">${t("العب","Play")}</button></div>`).join("")}</div>`},
+map(){return `<h2>${t("خريطة فلسطين البيئية","Palestine Nature Map")}</h2><div class="warn">${t("خريطة تعليمية بحدود مبسّطة (Natural Earth) ومواقع تقريبية للمدن، وليست خريطة سياسية. لا تُعرض مواقع الكائنات إلا عند توثيقها.","An educational map with simplified outlines (Natural Earth) and approximate city positions — not political. Species locations are shown only when documented.")}</div>
+ <div class="g" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="c"><svg id="msv" viewBox="${MAP.vb}" width="100%" role="img" aria-label="${t("خريطة","Map")}"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd88f"/><stop offset="1" stop-color="#809b57"/></linearGradient><filter id="sh"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity=".3"/></filter></defs><rect width="${MAP.w}" height="${MAP.h}" fill="#efe9d8"/>
+ ${MAP.paths.map(d=>`<path class="land" pathLength="1" d="${d}" fill="url(#lg)" stroke="#294C36" stroke-width="1.6" filter="url(#sh)"/>`).join("")}
+ ${PL.map(p=>{const [x,y]=MAP.c[p.id];return `<g class="pl${p.id===PL_SEL?" on":""}" data-pl="${p.id}" tabindex="0" role="button" aria-label="${p[lang]}"><circle class="pulse" cx="${x}" cy="${y}" r="4"/><circle class="dot" cx="${x}" cy="${y}" r="4.5" stroke="#fff" stroke-width="1.5"/><text x="${x+p.s*8}" y="${y+4}" text-anchor="${p.s>0?"start":"end"}" font-size="12" font-weight="700" fill="#294C36" stroke="#efe9d8" stroke-width="3" paint-order="stroke">${p[lang]}</text></g>`}).join("")}
+ <text id="fly" font-size="18" x="-50" y="-50">🐦</text></svg></div><div class="c" id="pp">${panel()}</div></div>`},
+badges(){return `<h2>${t("أوسمتي وإنجازاتي","My badges & achievements")}</h2><div class="g"><div class="c"><div class="big">${pts()}</div>${t("نقطة","points")}</div><div class="c"><div class="big">${lvl()}</div>${t("المستوى","level")}</div></div><div class="g mt">${BD.map(b=>`<div class="c ${b[3]()?"":"lock"}"><div class="big">${b[0]}</div>${b[lang==="ar"?1:2]}</div>`).join("")}</div>`},
+async teacher(){
+ if(!sb)return "";
+ const [a,b]=await Promise.all([sb.from("profiles").select("id,full_name").eq("role","student"),sb.from("student_progress").select("student_id,score,completed")]);
+ const rows=(a.data||[]).map(s=>{const m=(b.data||[]).filter(x=>x.student_id===s.id);return{n:s.full_name||"—",c:m.filter(x=>x.completed).length,p:m.reduce((z,x)=>z+(x.score||0),0)}}).sort((x,y)=>y.p-x.p);
+ return `<h2>${t("متابعة الطلبة","Student performance")}</h2>${rows.length?`<div class="g"><div class="c ok">🏆 ${t("الأكثر تقدمًا","Most advanced")}: <b>${esc(rows[0].n)}</b></div>${rows.length>1?`<div class="c no">🤝 ${t("يحتاج دعمًا","Needs support")}: <b>${esc(rows[rows.length-1].n)}</b></div>`:""}</div>
+ <div class="scroll mt"><table><tr><th>${t("الطالب","Student")}</th><th>${t("الأنشطة المكتملة","Completed")}</th><th>${t("النقاط","Points")}</th></tr>${rows.map(r=>`<tr><td>${esc(r.n)}</td><td>${r.c}</td><td>${r.p}</td></tr>`).join("")}</table></div>`:`<p>${t("لا يوجد طلبة مسندون إليك بعد.","No students assigned to you yet.")}</p>`}
+ <h2 class="mt">${t("خطة حصة مقترحة","Suggested lesson plan")}</h2><div class="c"><ol style="padding-inline-start:20px"><li>${t("قراءة قصة «الزهرة التي رفضت أن تختفي»","Read “The Flower That Refused to Disappear”")}</li><li>${t("قراءة شرح أجزاء السوسنة ثم لعبة التركيب","Read the iris parts explanation, then play the building game")}</li><li>${t("نقاش: لماذا نصوّر الأزهار ولا نقطفها؟","Discussion: why do we photograph flowers instead of picking them?")}</li></ol></div>
+ <div class="warn mt">${t("إسناد الأنشطة وإضافة ألعاب جديدة من لوحة المعلم: الخطوة التالية (غير متاحة بعد).","Assigning activities and adding new games from the teacher panel: next step (not available yet).")}</div>`},
+async admin(){
+ if(role!=="super_admin")return `<div class="warn">${t("لوحتك قيد البناء في الخطوة التالية.","Your dashboard is being built in the next step.")}</div>`;
+ const {data}=await sb.from("school_leads").select("*").order("created_at",{ascending:false});
+ return `<h2>${t("طلبات المدارس","School requests")}</h2>${(data||[]).length?`<div class="scroll"><table><tr><th>${t("المدرسة","School")}</th><th>${t("المحافظة","Governorate")}</th><th>${t("المسؤول","Contact")}</th><th>${t("الهاتف","Phone")}</th><th>${t("البريد","Email")}</th><th>${t("الحالة","Status")}</th></tr>${data.map(r=>`<tr><td>${esc(r.school_name)}</td><td>${esc(r.governorate)}</td><td>${esc(r.contact_name)}</td><td>${esc(r.phone)}</td><td>${esc(r.email)}</td><td>${esc(r.status)}</td></tr>`).join("")}</table></div>`:`<p>${t("لا توجد طلبات بعد.","No requests yet.")}</p>`}`}
+};
+
+/* ----- لعبة التركيب ----- */
+function gameV(){const P=PARTS[G.k],s=SP.find(x=>x.pk===G.k),i=I(),L=srcList(s),n=P.parts.length;
+ const title=`${t("ركّب","Build")}: ${s[lang]}`;
+ if(G.stage==="learn")return `<h2>${title}</h2><p>${t("اقرأ شرح الأجزاء أولًا، ثم ابدأ التركيب.","Read about the parts first, then start building.")}</p><div class="g">${P.parts.map(p=>`<div class="c"><b>${p[lang]}</b><p>${p.d[i]}${tag(p.s,L)}</p></div>`).join("")}</div><p class="mt"><button data-gstart="1" type="button">${t("ابدأ التركيب","Start building")}</button></p>${srcHtml(L)}`;
+ const left=P.parts.filter(p=>!G.done.has(p.id)),sel=P.parts.find(p=>p.id===G.sel);
+ return `<h2>${title}</h2><p>${t("اختر اسم الجزء (يظهر لك تلميح) ثم اضغط على مكانه في الرسم.","Pick a part name (a hint appears), then tap its place on the drawing.")}</p>
+ <div class="c" style="max-width:440px;margin:12px 0"><svg viewBox="${P.vb}" width="100%">${P.base}${P.parts.map(p=>`<g class="slot${G.done.has(p.id)?" done":""}" data-gs="${p.id}">${p.svg}</g>`).join("")}</svg></div>
+ <div>${left.map(p=>`<button class="pill" style="${G.sel===p.id?"outline:3px solid var(--f)":""}" data-gp="${p.id}" type="button">${p[lang]}</button>`).join("")}</div>
+ ${sel?`<div class="warn">💡 ${sel.d[i]}</div>`:""}<p role="status">${G.fb||""}</p>
+ ${left.length?"":`<div class="c ok"><b>${t("أحسنت! أكملت التركيب","Well done! You completed it")}</b> — ${t("النقاط","Points")}: ${G.score}/${n*10}<br><button data-go="games" type="button">${t("رجوع","Back")}</button> <button data-g="${G.k}" type="button">${t("إعادة المحاولة","Try again")}</button></div>`}`}
+
+/* ----- الخريطة: تكبير وطيران ----- */
+function panel(){const i=I(),p=PL.find(x=>x.id===PL_SEL);
+ if(!p)return `<p>${t("اضغط على مدينة في الخريطة.","Tap a city on the map.")}</p>`;
+ const sp=SP.map((s,j)=>[s,j]).filter(([s])=>(s.pl||[]).includes(p.id));
+ return `<h3>${p[lang]}</h3>${sp.length?sp.map(([s,j])=>`${IMG(s,"sm")}<p><b>${s[lang]}</b> <span class="sci">${s.sci}</span><br>${s.facts[5][i]}${tag(s.facts[5][2],srcList(s))}</p><button data-sp="${j}" type="button">${t("اقرأ المزيد","Read more")}</button>`).join(""):`<p>${t("لم تُوثّق أنواع هذا المكان بعد في مصادرنا.","No species documented for this place in our sources yet.")}</p>`}
+ <div class="warn">${t("طائر الشمس الفلسطيني موثّق في أنحاء فلسطين عمومًا (توزيع عام، لا موقع محدد).","The Palestine sunbird is documented across Palestine in general (broad range, not a specific site).")}</div><button data-mz="1" type="button">${t("إظهار الخريطة كاملة","Show full map")}</button>`}
+function zoomTo(tg,ms){const sv=$("#msv");if(!sv)return;const cur=sv.getAttribute("viewBox").split(" ").map(Number);
+ if(reduce){sv.setAttribute("viewBox",tg.join(" "));return}
+ const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;sv.setAttribute("viewBox",cur.map((v,j)=>v+(tg[j]-v)*e).join(" "));if(k<1)requestAnimationFrame(f)})(t0)}
+function fly(to){const b=$("#fly");if(!b)return;const a=fl||[MAP.w*.1,MAP.h*.05],c=[(a[0]+to[0])/2,Math.min(a[1],to[1])-40];fl=to;
+ const put=(x,y)=>{b.setAttribute("x",x);b.setAttribute("y",y)};if(reduce){put(to[0]-8,to[1]-12);return}
+ const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/1100),m=1-k,x=m*m*a[0]+2*m*k*c[0]+k*k*to[0],y=m*m*a[1]+2*m*k*c[1]+k*k*to[1];put(x-8,y-12-Math.sin(k*Math.PI)*0);if(k<1)requestAnimationFrame(f)})(t0)}
+async function pick(id){PL_SEL=id;const [x,y]=MAP.c[id],w=MAP.w*.42,h=MAP.h*.42;
+ document.querySelectorAll(".pl").forEach(g=>g.classList.toggle("on",g.dataset.pl===id));$("#pp").innerHTML=panel();
+ zoomTo([Math.max(0,Math.min(MAP.w-w,x-w/2)),Math.max(0,Math.min(MAP.h-h,y-h/2)),w,h],900);fly([x,y]);await save("map","visited",0)}
+
+/* ----- التنقل والأحداث ----- */
+const LBL={home:["الرئيسية","Home"],library:["المكتبة","Library"],stories:["القصص","Stories"],games:["الألعاب","Games"],map:["الخريطة","Map"],badges:["الأوسمة","Badges"],teacher:["لوحة المعلم","Teacher"],admin:["الإدارة","Admin"]};
+const NAV=()=>role==="teacher"?["teacher","library","stories","games"]:(role==="student"||role==="guest")?["home","library","stories","games","map","badges"]:["admin"];
+async function render(){
+  document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  $("#bn").textContent=t("بصمة","BASMA");$("#lb").textContent=lang==="ar"?"EN":"عربي";$("#ob").textContent=role==="guest"?t("خروج","Exit"):t("تسجيل الخروج","Log out");
+  $("#who").textContent=uname+(role==="student"||role==="guest"?" · "+pts()+" ⭐":"");
+  $("#nav").innerHTML=NAV().map(v=>`<button type="button" data-go="${v}" class="${v===view?"on":""}">${LBL[v][I()]}</button>`).join("");
+  fl=null;$("#v").innerHTML=await V[view]();
+  if(view==="map"&&PL_SEL){const [x,y]=MAP.c[PL_SEL];fl=[x,y];const b=$("#fly");b.setAttribute("x",x-8);b.setAttribute("y",y-12)}
+}
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-go],[data-lang],[data-out],[data-st],[data-gp],[data-gs],[data-g],[data-gstart],[data-pl],[data-sp],[data-mz]");if(!el)return;const d=el.dataset;
+  if(d.pl&&!d.gomap){await pick(d.pl);return}
+  if(d.mz){zoomTo([0,0,MAP.w,MAP.h],700);return}
+  if(d.go){view=d.go;if(view==="games")G=null;if(view==="library")LB=null;if(view==="stories")ST={}}
+  else if(d.lang){lang=lang==="ar"?"en":"ar";localStorage.setItem("basma_lang",lang)}
+  else if(d.out){if(sb&&user)await sb.auth.signOut();sessionStorage.removeItem("basma_guest");location.href="index.html";return}
+  else if(d.pl&&d.gomap){view="map";PL_SEL=null;await render();await pick(d.pl);return}
+  else if(d.sp){view="library";LB=+d.sp}
+  else if(d.g){view="games";G={k:d.g,stage:"learn",sel:null,done:new Set(),mis:0,fb:"",score:0}}
+  else if(d.gstart&&G){G.stage="play"}
+  else if(d.gp&&G){G.sel=d.gp;G.fb=""}
+  else if(d.gs&&G&&G.stage==="play"){const id=d.gs,n=PARTS[G.k].parts.length;if(!G.done.has(id)){
+    if(!G.sel)G.fb=t("اختر اسم الجزء أولًا.","Pick a part name first.");
+    else if(G.sel===id){G.done.add(id);G.sel=null;G.fb="✓ "+t("صحيح!","Correct!");
+      if(G.done.size===n){G.score=Math.max(10,n*10-5*G.mis);await save("game",G.k,G.score)}}
+    else{G.mis++;G.fb=t("ليس هذا الجزء. اقرأ التلميح وحاول مرة أخرى.","Not this one. Read the hint and try again.")}}}
+  else if(d.st){const a=d.st,S=STORIES[ST.k];
+    if(a.startsWith("open:")){view="stories";ST={k:a.slice(5),ph:"read",i:0,q:0,sc:0}}
+    else if(a==="next"){if(ST.i===S.ci&&!ST.passed){ST.ph="choice";ST.fb=""}else if(ST.i===S.paras.length-1){ST.ph="learn";await save("story",ST.k,20)}else ST.i++}
+    else if(/^c\d$/.test(a)){const o=S.ch[+a[1]];if(!o[2]){ST.passed=1;ST.ph="read";ST.i=S.ri;ST.fb=""}else ST.fb=o[2+I()]}
+    else if(a==="quiz"){ST.ph="quiz";ST.q=0;ST.sc=0;ST.a=null;ST.o=shuf([0,1,2])}
+    else if(/^q\d$/.test(a)&&ST.a==null){ST.a=+a[1];if(ST.a===0){ST.sc+=10;toast("✓ "+t("إجابة صحيحة!","Correct answer!"))}}
+    else if(a==="nq"){if(ST.q===2){ST.ph="done";await save("quiz",ST.k,ST.sc)}else{ST.q++;ST.a=null;ST.o=shuf([0,1,2])}}}
+  render();
+});
+(async()=>{
+  if(sb){const {data}=await sb.auth.getSession();
+    if(data.session){user=data.session.user;const {data:p}=await sb.from("profiles").select("role,full_name,active").eq("id",user.id).single();
+      if(!p||!p.active){await sb.auth.signOut();location.href="index.html";return}role=p.role;uname=p.full_name||""}}
+  if(!user){if(sessionStorage.getItem("basma_guest")!=="1"){location.href="index.html";return}role="guest";uname=t("زائر","Guest")}
+  await loadProg();view=NAV()[0];render();
+})();
+</script>
+</body>
+</html>
